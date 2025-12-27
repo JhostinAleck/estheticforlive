@@ -1,0 +1,18 @@
+import Layout from '../components/layout/Layout';
+import Hero from '../components/home/Hero';
+import ServicesGrid from '../components/home/ServicesGrid';
+import SocialProof from '../components/home/SocialProof';
+import SocialFeed from '../components/home/SocialFeed';
+
+const HomePage = () => {
+  return (
+    <Layout>
+      <Hero />
+      <ServicesGrid />
+      <SocialProof />
+      <SocialFeed />
+    </Layout>
+  );
+};
+
+export default HomePage;
