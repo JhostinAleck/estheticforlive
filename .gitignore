@@ -34,3 +34,4 @@ studio/dist
 
 # Claude
 .claude
+.vercel
