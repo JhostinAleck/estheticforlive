@@ -68,13 +68,15 @@ export function useServices() {
           sanityServices.forEach((service) => {
             const categoryKey = categoryMap[service.category];
             if (categoryKey) {
+              const imageUrl = service.image ? urlFor(service.image).width(600).height(450).url() : '';
+              console.log(`[Sanity] ${service.name}: ${imageUrl || 'SIN IMAGEN'}`);
               grouped[categoryKey].push({
                 id: service._id,
                 name: service.name,
                 description: service.description,
                 category: service.category,
                 faIcon: service.faIcon || 'fa-solid fa-spa',
-                image: service.image ? urlFor(service.image).width(600).height(450).url() : '',
+                image: imageUrl,
               });
             }
           });
