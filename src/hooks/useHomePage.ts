@@ -157,11 +157,19 @@ export function useHomePage() {
         }
 
         if (resultsData?.length > 0) {
-          setResults(resultsData.map((result: any) => ({
-            ...result,
-            beforeImage: result.beforeImage ? urlFor(result.beforeImage).width(400).height(500).url() : '',
-            afterImage: result.afterImage ? urlFor(result.afterImage).width(400).height(500).url() : '',
-          })));
+          // Solo incluir resultados que tengan AMBAS imágenes
+          const validResults = resultsData
+            .filter((result: any) => result.beforeImage && result.afterImage)
+            .map((result: any) => ({
+              ...result,
+              beforeImage: urlFor(result.beforeImage).width(400).height(500).url(),
+              afterImage: urlFor(result.afterImage).width(400).height(500).url(),
+            }));
+
+          if (validResults.length > 0) {
+            setResults(validResults);
+          }
+          // Si no hay resultados válidos, mantiene los defaults
         }
 
         if (heroData?.length > 0) {
