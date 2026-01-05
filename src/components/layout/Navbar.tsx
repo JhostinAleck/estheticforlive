@@ -1,32 +1,43 @@
-import { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { Menu, X } from 'lucide-react';
-import { cn } from '../../utils/cn';
-import Button from '../ui/Button';
-import { socialMedia } from '../../data/socialMedia';
+'use client'
 
-const Navbar = () => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
-  const location = useLocation();
-  const isHome = location.pathname === '/';
+import { useState, useEffect } from 'react'
+import Link from 'next/link'
+import Image from 'next/image'
+import { usePathname } from 'next/navigation'
+import { Menu, X } from 'lucide-react'
+import { cn } from '@/lib/utils/cn'
+import { Button } from '@/components/ui/Button'
+import { SOCIAL_MEDIA } from '@/lib/constants'
+import { generateWhatsAppLink } from '@/lib/utils'
+
+export function Navbar() {
+  const [isOpen, setIsOpen] = useState(false)
+  const [scrolled, setScrolled] = useState(false)
+  const pathname = usePathname()
+  const isHome = pathname === '/'
 
   useEffect(() => {
     const handleScroll = () => {
-      setScrolled(window.scrollY > 50);
-    };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+      setScrolled(window.scrollY > 50)
+    }
+    window.addEventListener('scroll', handleScroll)
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
 
   useEffect(() => {
-    setIsOpen(false);
-  }, [location]);
+    setIsOpen(false)
+  }, [pathname])
 
   const navLinks = [
     { name: 'Inicio', path: '/' },
     { name: 'Servicios', path: '/servicios' },
-  ];
+    { name: 'Reservar', path: '/reservar' },
+  ]
+
+  const whatsappLink = generateWhatsAppLink(
+    SOCIAL_MEDIA.whatsapp.phone,
+    SOCIAL_MEDIA.whatsapp.defaultMessage
+  )
 
   return (
     <nav
@@ -38,11 +49,14 @@ const Navbar = () => {
       )}
     >
       <div className="container mx-auto px-4 md:px-6 flex items-center justify-between">
-        <Link to="/" className="flex items-center gap-2 group">
-          <img
+        <Link href="/" className="flex items-center gap-2 group">
+          <Image
             src="/esthetic-logo.png"
             alt="Esthetic For Live"
+            width={120}
+            height={48}
             className="h-10 md:h-12 w-auto object-contain transition-all duration-300"
+            priority
           />
         </Link>
 
@@ -52,24 +66,24 @@ const Navbar = () => {
             {navLinks.map((link) => (
               <Link
                 key={link.path}
-                to={link.path}
+                href={link.path}
                 className={cn(
                   'text-sm font-medium transition-all duration-300 relative py-1 px-2 rounded-md',
-                  location.pathname === link.path
+                  pathname === link.path
                     ? 'text-accent font-bold'
                     : 'text-secondary hover:text-accent hover:bg-accent-light/50'
                 )}
                 style={!scrolled && isHome ? { textShadow: '0 1px 2px rgba(255,255,255,0.8)' } : undefined}
               >
                 {link.name}
-                {location.pathname === link.path && (
+                {pathname === link.path && (
                   <span className="absolute bottom-0 left-0 w-full h-0.5 bg-accent rounded-full" />
                 )}
               </Link>
             ))}
           </div>
           <a
-            href={socialMedia.whatsapp.link}
+            href={whatsappLink}
             target="_blank"
             rel="noopener noreferrer"
           >
@@ -100,17 +114,17 @@ const Navbar = () => {
           {navLinks.map((link) => (
             <Link
               key={link.path}
-              to={link.path}
+              href={link.path}
               className={cn(
                 'text-base font-medium py-3 px-4 rounded-xl transition-colors',
-                location.pathname === link.path ? 'text-accent bg-accent-light' : 'text-secondary hover:bg-surface'
+                pathname === link.path ? 'text-accent bg-accent-light' : 'text-secondary hover:bg-surface'
               )}
             >
               {link.name}
             </Link>
           ))}
           <a
-            href={socialMedia.whatsapp.link}
+            href={whatsappLink}
             target="_blank"
             rel="noopener noreferrer"
             className="w-full mt-2"
@@ -120,7 +134,5 @@ const Navbar = () => {
         </div>
       </div>
     </nav>
-  );
-};
-
-export default Navbar;
+  )
+}

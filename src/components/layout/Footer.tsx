@@ -1,18 +1,34 @@
-import { Link } from 'react-router-dom';
-import { MapPin, Mail, Phone, Instagram, Facebook } from 'lucide-react';
-import { socialMedia } from '../../data/socialMedia';
+'use client'
 
-const Footer = () => {
+import Link from 'next/link'
+import Image from 'next/image'
+import { MapPin, Mail, Phone, Instagram, Facebook } from 'lucide-react'
+import { SOCIAL_MEDIA } from '@/lib/constants'
+import { generateWhatsAppLink } from '@/lib/utils'
+import type { SiteSettings } from '@/types/database.types'
+
+interface FooterProps {
+  settings: SiteSettings | null
+}
+
+export function Footer({ settings }: FooterProps) {
+  const whatsappLink = generateWhatsAppLink(
+    settings?.whatsapp_number || SOCIAL_MEDIA.whatsapp.phone,
+    SOCIAL_MEDIA.whatsapp.defaultMessage
+  )
+
   return (
     <footer className="bg-surface pt-16 pb-8 border-t border-border">
       <div className="container mx-auto px-4 md:px-6">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-12">
           {/* Brand */}
           <div className="space-y-4">
-            <Link to="/" className="flex items-center gap-2 group">
-              <img
+            <Link href="/" className="flex items-center gap-2 group">
+              <Image
                 src="/esthetic-logo.png"
                 alt="Esthetic For Live"
+                width={100}
+                height={40}
                 className="h-10 w-auto object-contain"
               />
             </Link>
@@ -21,7 +37,7 @@ const Footer = () => {
             </p>
             <div className="flex gap-3 pt-2">
               <a
-                href={socialMedia.instagram.embedUrl.replace('/embed', '')}
+                href={settings?.instagram_url || SOCIAL_MEDIA.instagram.url}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="bg-accent-light p-2.5 rounded-full text-accent hover:bg-accent hover:text-white transition-colors"
@@ -29,7 +45,7 @@ const Footer = () => {
                 <Instagram className="h-5 w-5" />
               </a>
               <a
-                href={socialMedia.tiktok.embedUrl.replace('/embed', '')}
+                href={settings?.tiktok_url || SOCIAL_MEDIA.tiktok.url}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="bg-accent-light p-2.5 rounded-full text-accent hover:bg-accent hover:text-white transition-colors"
@@ -56,10 +72,13 @@ const Footer = () => {
             <h3 className="text-secondary font-semibold mb-6">Enlaces Rápidos</h3>
             <ul className="space-y-3">
               <li>
-                <Link to="/" className="text-muted hover:text-accent transition-colors text-sm">Inicio</Link>
+                <Link href="/" className="text-muted hover:text-accent transition-colors text-sm">Inicio</Link>
               </li>
               <li>
-                <Link to="/servicios" className="text-muted hover:text-accent transition-colors text-sm">Servicios</Link>
+                <Link href="/servicios" className="text-muted hover:text-accent transition-colors text-sm">Servicios</Link>
+              </li>
+              <li>
+                <Link href="/reservar" className="text-muted hover:text-accent transition-colors text-sm">Reservar Cita</Link>
               </li>
             </ul>
           </div>
@@ -81,25 +100,25 @@ const Footer = () => {
             <ul className="space-y-4">
               <li className="flex items-start gap-3">
                 <MapPin className="h-5 w-5 text-accent shrink-0 mt-0.5" />
-                <a 
-                  href={socialMedia.location.mapsUrl}
-                  target="_blank" 
+                <a
+                  href={settings?.maps_url || SOCIAL_MEDIA.location.mapsUrl}
+                  target="_blank"
                   rel="noopener noreferrer"
                   className="text-muted hover:text-accent transition-colors text-sm"
                 >
-                  {socialMedia.location.address}<br />
-                  <span className="text-muted-light">{socialMedia.location.city}</span>
+                  {settings?.address || SOCIAL_MEDIA.location.address}<br />
+                  <span className="text-muted-light">{settings?.city || SOCIAL_MEDIA.location.city}</span>
                 </a>
               </li>
               <li className="flex items-center gap-3">
                 <Phone className="h-5 w-5 text-accent shrink-0" />
-                <a href={socialMedia.whatsapp.link} target="_blank" rel="noopener noreferrer" className="text-muted hover:text-accent transition-colors text-sm">
-                  {socialMedia.whatsapp.phoneNumber}
+                <a href={whatsappLink} target="_blank" rel="noopener noreferrer" className="text-muted hover:text-accent transition-colors text-sm">
+                  {settings?.whatsapp_number || SOCIAL_MEDIA.whatsapp.phoneNumber}
                 </a>
               </li>
               <li className="flex items-center gap-3">
                 <Mail className="h-5 w-5 text-accent shrink-0" />
-                <span className="text-muted text-sm">contacto@estheticforlive.com</span>
+                <span className="text-muted text-sm">{settings?.email || 'contacto@estheticforlive.com'}</span>
               </li>
             </ul>
           </div>
@@ -110,7 +129,7 @@ const Footer = () => {
           <h3 className="text-secondary font-semibold mb-6 text-center">Encuéntranos</h3>
           <div className="relative rounded-2xl overflow-hidden border border-border shadow-lg">
             <iframe
-              src={socialMedia.location.mapsEmbed}
+              src={settings?.maps_embed_url || SOCIAL_MEDIA.location.mapsEmbed}
               width="100%"
               height="350"
               style={{ border: 0 }}
@@ -120,9 +139,9 @@ const Footer = () => {
               title="Ubicación Esthetic For Live"
               className="w-full"
             />
-            <a 
-              href={socialMedia.location.mapsUrl}
-              target="_blank" 
+            <a
+              href={settings?.maps_url || SOCIAL_MEDIA.location.mapsUrl}
+              target="_blank"
               rel="noopener noreferrer"
               className="absolute bottom-4 right-4 bg-accent text-white px-4 py-2 rounded-full text-sm font-medium hover:bg-accent-hover transition-colors shadow-lg flex items-center gap-2"
             >
@@ -143,7 +162,5 @@ const Footer = () => {
         </div>
       </div>
     </footer>
-  );
-};
-
-export default Footer;
+  )
+}

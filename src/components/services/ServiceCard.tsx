@@ -1,59 +1,82 @@
-import { Service } from '../../types';
-import Button from '../ui/Button';
-import { useState } from 'react';
-import BookingModal from '../ui/BookingModal';
+'use client'
+
+import Image from 'next/image'
+import Link from 'next/link'
+import { Button } from '@/components/ui/Button'
+import { SOCIAL_MEDIA } from '@/lib/constants'
+import { generateWhatsAppLink, formatPrice } from '@/lib/utils'
+import type { Service } from '@/types/database.types'
 
 interface ServiceCardProps {
-  service: Service;
+  service: Service
 }
 
-const ServiceCard = ({ service }: ServiceCardProps) => {
-  const [isModalOpen, setIsModalOpen] = useState(false);
+export function ServiceCard({ service }: ServiceCardProps) {
+  const whatsappMessage = `Hola, estoy interesado en el servicio de *${service.name}*`
+  const whatsappLink = generateWhatsAppLink(SOCIAL_MEDIA.whatsapp.phone, whatsappMessage)
 
   return (
-    <>
-      <div className="bg-white rounded-2xl overflow-hidden border border-border hover:border-accent/30 shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col h-full group">
-        <div className="relative h-48 overflow-hidden">
-          {service.image ? (
-            <img
-              src={service.image}
-              alt={service.name}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-            />
-          ) : (
-            <div className="w-full h-full bg-surface-dark flex items-center justify-center">
-              <i className={`${service.faIcon} text-4xl text-accent/30`} />
-            </div>
-          )}
-          <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm p-2.5 rounded-full shadow-sm">
-            <i className={`${service.faIcon} text-accent text-lg`} />
+    <div className="group bg-white rounded-2xl border border-border hover:border-accent/30 hover:shadow-lg transition-all duration-300 overflow-hidden">
+      {/* Image */}
+      <div className="aspect-[4/3] overflow-hidden bg-accent-light relative">
+        {service.image_url ? (
+          <Image
+            src={service.image_url}
+            alt={service.name}
+            width={600}
+            height={450}
+            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center">
+            <i className={`${service.fa_icon} text-5xl text-accent/40`} />
           </div>
-        </div>
+        )}
 
-        <div className="p-6 flex flex-col flex-grow">
-          <div className="flex justify-between items-start mb-4 gap-3">
-            <h3 className="text-xl font-bold text-secondary group-hover:text-accent transition-colors">{service.name}</h3>
+        {/* Price Badge */}
+        {service.price && (
+          <div className="absolute top-4 right-4 bg-accent text-white px-3 py-1 rounded-full text-sm font-medium">
+            {formatPrice(service.price)}
+            {service.price_note && <span className="text-xs ml-1">/{service.price_note}</span>}
           </div>
-          <p className="text-muted mb-6 flex-grow leading-relaxed text-sm">{service.description}</p>
-          <div className="pt-4 border-t border-border">
-            <Button
-              variant="outline"
-              className="w-full group-hover:bg-accent group-hover:text-white group-hover:border-accent transition-all"
-              onClick={() => setIsModalOpen(true)}
-            >
-              Agendar Cita
-            </Button>
-          </div>
-        </div>
+        )}
       </div>
 
-      <BookingModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        serviceName={service.name}
-      />
-    </>
-  );
-};
+      {/* Content */}
+      <div className="p-6">
+        <div className="flex items-start gap-4 mb-4">
+          <div className="bg-accent-light w-12 h-12 rounded-xl flex items-center justify-center shrink-0 group-hover:bg-accent group-hover:text-white transition-colors text-accent">
+            <i className={`${service.fa_icon} text-xl`} />
+          </div>
+          <div>
+            <h3 className="text-lg font-bold text-secondary group-hover:text-accent transition-colors">
+              {service.name}
+            </h3>
+            {service.duration_minutes && (
+              <span className="text-xs text-muted">
+                {service.duration_minutes} min aprox.
+              </span>
+            )}
+          </div>
+        </div>
 
-export default ServiceCard;
+        <p className="text-muted text-sm mb-6 line-clamp-3">
+          {service.short_description || service.description}
+        </p>
+
+        <div className="flex gap-3">
+          <a href={whatsappLink} target="_blank" rel="noopener noreferrer" className="flex-1">
+            <Button className="w-full" size="sm">
+              Agendar Cita
+            </Button>
+          </a>
+          <Link href={`/servicios/${service.slug}`}>
+            <Button variant="outline" size="sm">
+              Ver más
+            </Button>
+          </Link>
+        </div>
+      </div>
+    </div>
+  )
+}
