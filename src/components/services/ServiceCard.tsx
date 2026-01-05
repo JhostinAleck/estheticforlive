@@ -3,8 +3,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { Button } from '@/components/ui/Button'
-import { SOCIAL_MEDIA } from '@/lib/constants'
-import { generateWhatsAppLink, formatPrice } from '@/lib/utils'
+import { formatPrice } from '@/lib/utils'
 import type { Service } from '@/types/database.types'
 
 interface ServiceCardProps {
@@ -12,9 +11,6 @@ interface ServiceCardProps {
 }
 
 export function ServiceCard({ service }: ServiceCardProps) {
-  const whatsappMessage = `Hola, estoy interesado en el servicio de *${service.name}*`
-  const whatsappLink = generateWhatsAppLink(SOCIAL_MEDIA.whatsapp.phone, whatsappMessage)
-
   return (
     <div className="group bg-white rounded-2xl border border-border hover:border-accent/30 hover:shadow-lg transition-all duration-300 overflow-hidden">
       {/* Image */}
@@ -65,11 +61,11 @@ export function ServiceCard({ service }: ServiceCardProps) {
         </p>
 
         <div className="flex gap-3">
-          <a href={whatsappLink} target="_blank" rel="noopener noreferrer" className="flex-1">
+          <Link href={`/reservar/${service.id}`} className="flex-1">
             <Button className="w-full" size="sm">
               Agendar Cita
             </Button>
-          </a>
+          </Link>
           <Link href={`/servicios/${service.slug}`}>
             <Button variant="outline" size="sm">
               Ver más

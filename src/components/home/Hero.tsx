@@ -6,7 +6,6 @@ import Link from 'next/link'
 import { ArrowRight, ChevronLeft, ChevronRight, MapPin, Phone, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { SOCIAL_MEDIA } from '@/lib/constants'
-import { generateWhatsAppLink } from '@/lib/utils'
 
 // Hero slides hardcodeados
 const HERO_SLIDES = [
@@ -86,10 +85,6 @@ export function Hero() {
   }, [nextSlide, slides.length])
 
   const current = slides[currentSlide]
-  const whatsappLink = generateWhatsAppLink(
-    SOCIAL_MEDIA.whatsapp.phone,
-    SOCIAL_MEDIA.whatsapp.defaultMessage
-  )
 
   return (
     <section className="relative h-screen w-full overflow-hidden">
@@ -133,12 +128,12 @@ export function Hero() {
             )}
 
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 animate-fade-in-up animation-delay-400">
-              <a href={current.cta_link || whatsappLink} target={current.cta_link ? '_self' : '_blank'} rel="noopener noreferrer">
+              <Link href={current.cta_link || '/reservar'}>
                 <Button size="lg" className="group w-full sm:w-auto shadow-lg shadow-accent/30 bg-accent hover:bg-accent-hover text-white border-none">
                   {current.cta_text || 'Agendar Cita'}
                   <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
                 </Button>
-              </a>
+              </Link>
               <Link href="/servicios">
                 <Button size="lg" variant="outline" className="w-full sm:w-auto border-white text-white hover:bg-white hover:text-secondary bg-white/20 backdrop-blur-sm">
                   Ver Servicios

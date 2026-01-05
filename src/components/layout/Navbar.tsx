@@ -7,8 +7,6 @@ import { usePathname } from 'next/navigation'
 import { Menu, X } from 'lucide-react'
 import { cn } from '@/lib/utils/cn'
 import { Button } from '@/components/ui/Button'
-import { SOCIAL_MEDIA } from '@/lib/constants'
-import { generateWhatsAppLink } from '@/lib/utils'
 
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false)
@@ -33,11 +31,6 @@ export function Navbar() {
     { name: 'Servicios', path: '/servicios' },
     { name: 'Reservar', path: '/reservar' },
   ]
-
-  const whatsappLink = generateWhatsAppLink(
-    SOCIAL_MEDIA.whatsapp.phone,
-    SOCIAL_MEDIA.whatsapp.defaultMessage
-  )
 
   return (
     <nav
@@ -82,15 +75,11 @@ export function Navbar() {
               </Link>
             ))}
           </div>
-          <a
-            href={whatsappLink}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
+          <Link href="/reservar">
             <Button size="sm">
               Agendar Cita
             </Button>
-          </a>
+          </Link>
         </div>
 
         {/* Mobile Toggle */}
@@ -123,14 +112,9 @@ export function Navbar() {
               {link.name}
             </Link>
           ))}
-          <a
-            href={whatsappLink}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="w-full mt-2"
-          >
+          <Link href="/reservar" className="w-full mt-2">
             <Button className="w-full">Agendar Cita</Button>
-          </a>
+          </Link>
         </div>
       </div>
     </nav>
