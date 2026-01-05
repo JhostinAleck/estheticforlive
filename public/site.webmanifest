@@ -1,0 +1,21 @@
+{
+  "name": "Esthetic For Live",
+  "short_name": "Esthetic",
+  "description": "Centro de Estética Profesional",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FEF7F8",
+  "theme_color": "#E91E63",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "/esthetic-logo.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    }
+  ]
+}

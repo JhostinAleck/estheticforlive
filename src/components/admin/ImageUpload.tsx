@@ -3,7 +3,7 @@
 import { useState, useRef } from 'react'
 import Image from 'next/image'
 import { Upload, X, Loader2, ImageIcon } from 'lucide-react'
-import { uploadImage } from '@/lib/actions/upload'
+import { uploadImageFromForm } from '@/lib/actions/upload'
 
 interface ImageUploadProps {
   value?: string
@@ -22,12 +22,17 @@ export function ImageUpload({ value, onChange, folder = 'general', className = '
     setUploading(true)
     setError('')
 
-    const result = await uploadImage(file, folder)
+    // Create FormData to pass File to server action
+    const formData = new FormData()
+    formData.append('file', file)
+    formData.append('folder', folder)
+
+    const result = await uploadImageFromForm(formData)
 
     if (result.success) {
       onChange(result.url)
     } else {
-      setError(result.error)
+      setError(result.error || 'Error al subir imagen')
     }
 
     setUploading(false)

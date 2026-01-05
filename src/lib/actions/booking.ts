@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { format, parse, addMinutes } from 'date-fns'
 import { revalidatePath } from 'next/cache'
+import { sendBookingConfirmation, sendAdminNotification } from '@/lib/email/send'
 
 interface BookingData {
   serviceId: string
@@ -275,6 +276,32 @@ export async function createBooking(data: BookingData): Promise<BookingResult> {
     await supabase.rpc('increment_client_appointments' as never, { client_id: clientId } as never)
 
     revalidatePath('/admin/reservas')
+
+    // Send confirmation emails (async, don't block the response)
+    const appointmentDate = new Date(data.date)
+
+    // Send to client
+    if (data.email) {
+      sendBookingConfirmation({
+        clientEmail: data.email,
+        clientName: data.fullName,
+        serviceName: service.name,
+        appointmentDate,
+        appointmentTime: data.time,
+      }).catch(err => console.error('Failed to send client email:', err))
+    }
+
+    // Send to admin
+    sendAdminNotification({
+      clientName: data.fullName,
+      clientPhone: data.phone,
+      clientEmail: data.email,
+      serviceName: service.name,
+      appointmentDate,
+      appointmentTime: data.time,
+      clientNotes: data.notes,
+      appointmentId: appointment.id,
+    }).catch(err => console.error('Failed to send admin email:', err))
 
     return { success: true, appointmentId: appointment.id }
   } catch (error) {

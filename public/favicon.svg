@@ -1,4 +1,10 @@
 <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-<rect width="32" height="32" fill="#0A0B0D"/>
-<path d="M26.6677 23.7149H8.38057V20.6496H5.33301V8.38159H26.6677V23.7149ZM8.38057 20.6496H23.6201V11.4482H8.38057V20.6496ZM16.0011 16.0021L13.8461 18.1705L11.6913 16.0021L13.8461 13.8337L16.0011 16.0021ZM22.0963 16.0008L19.9414 18.1691L17.7865 16.0008L19.9414 13.8324L22.0963 16.0008Z" fill="#32F08C"/>
+  <rect width="32" height="32" rx="8" fill="#E91E63"/>
+  <g transform="translate(6, 6)">
+    <!-- Lotus flower / spa icon -->
+    <path d="M10 4C10 4 7 7 7 10C7 12 8.5 13.5 10 14C11.5 13.5 13 12 13 10C13 7 10 4 10 4Z" fill="white"/>
+    <path d="M10 4C10 4 13 7 15 8C17 9 18 10.5 17 12C16 13.5 14 13 12 12C10 11 10 9 10 9" fill="white" opacity="0.7"/>
+    <path d="M10 4C10 4 7 7 5 8C3 9 2 10.5 3 12C4 13.5 6 13 8 12C10 11 10 9 10 9" fill="white" opacity="0.7"/>
+    <ellipse cx="10" cy="15" rx="4" ry="1.5" fill="white" opacity="0.4"/>
+  </g>
 </svg>

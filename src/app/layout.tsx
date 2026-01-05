@@ -11,6 +11,13 @@ export const metadata: Metadata = {
   keywords: ['estética', 'belleza', 'tratamientos faciales', 'spa', 'La Plata', 'Huila', 'Colombia'],
   authors: [{ name: 'Esthetic For Live' }],
   creator: 'Esthetic For Live',
+  icons: {
+    icon: [
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+    ],
+    apple: '/esthetic-logo.png',
+  },
+  manifest: '/site.webmanifest',
   openGraph: {
     type: 'website',
     locale: 'es_CO',
@@ -18,6 +25,7 @@ export const metadata: Metadata = {
     siteName: 'Esthetic For Live',
     title: 'Esthetic For Live - Centro de Estética',
     description: 'Centro de estética especializado en tratamientos faciales, corporales, masajes y más.',
+    images: ['/esthetic-logo.png'],
   },
   twitter: {
     card: 'summary_large_image',
