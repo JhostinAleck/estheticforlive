@@ -8,6 +8,7 @@ import {
   LayoutDashboard,
   Calendar,
   CalendarDays,
+  CalendarOff,
   Scissors,
   Users,
   UserCircle,
@@ -55,6 +56,11 @@ const navItems = [
     label: 'Clientes',
     href: '/admin/clientes',
     icon: <Users className="w-5 h-5" />,
+  },
+  {
+    label: 'Horarios',
+    href: '/admin/horarios',
+    icon: <CalendarOff className="w-5 h-5" />,
   },
 ]
 
