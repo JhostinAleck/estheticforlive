@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { format, parseISO } from 'date-fns'
 import { es } from 'date-fns/locale'
-import { Calendar, Search, Filter, Eye, Phone } from 'lucide-react'
+import { Calendar, Filter, Eye, Phone, Plus, User } from 'lucide-react'
 import { APPOINTMENT_STATUS } from '@/lib/constants'
 
 export const metadata: Metadata = {
@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 interface SearchParams {
   status?: string
   date?: string
-  search?: string
+  staff?: string
   page?: string
 }
 
@@ -26,6 +26,13 @@ interface Appointment {
   status: string
   services: { name: string; fa_icon: string } | null
   clients: { full_name: string; phone: string; email: string | null } | null
+  staff: { id: string; name: string; color: string } | null
+}
+
+interface Staff {
+  id: string
+  name: string
+  color: string
 }
 
 async function getAppointments(searchParams: SearchParams) {
@@ -36,7 +43,7 @@ async function getAppointments(searchParams: SearchParams) {
 
   let query = supabase
     .from('appointments')
-    .select('*, services(name, fa_icon), clients(full_name, phone, email)', { count: 'exact' })
+    .select('*, services(name, fa_icon), clients(full_name, phone, email), staff(id, name, color)', { count: 'exact' })
     .order('appointment_date', { ascending: false })
     .order('start_time', { ascending: false })
     .range(offset, offset + pageSize - 1)
@@ -47,6 +54,10 @@ async function getAppointments(searchParams: SearchParams) {
 
   if (searchParams.date) {
     query = query.eq('appointment_date', searchParams.date)
+  }
+
+  if (searchParams.staff && searchParams.staff !== 'all') {
+    query = query.eq('staff_id', searchParams.staff)
   }
 
   const { data, count } = await query
@@ -60,13 +71,27 @@ async function getAppointments(searchParams: SearchParams) {
   }
 }
 
+async function getStaffList() {
+  const supabase = await createClient()
+  const { data } = await supabase
+    .from('staff')
+    .select('id, name, color')
+    .eq('is_active', true)
+    .order('name')
+
+  return (data || []) as Staff[]
+}
+
 export default async function ReservasPage({
   searchParams,
 }: {
   searchParams: Promise<SearchParams>
 }) {
   const params = await searchParams
-  const { appointments, total, page, totalPages } = await getAppointments(params)
+  const [{ appointments, total, page, totalPages }, staffList] = await Promise.all([
+    getAppointments(params),
+    getStaffList(),
+  ])
 
   const statusOptions = [
     { value: 'all', label: 'Todos' },
@@ -84,6 +109,13 @@ export default async function ReservasPage({
           <h1 className="text-2xl font-bold text-secondary">Reservas</h1>
           <p className="text-muted">{total} reservas en total</p>
         </div>
+        <Link
+          href="/admin/reservas/nueva"
+          className="inline-flex items-center gap-2 px-4 py-2 bg-accent text-white rounded-xl font-medium hover:bg-accent/90 transition-colors"
+        >
+          <Plus className="w-5 h-5" />
+          Nueva Reserva
+        </Link>
       </div>
 
       {/* Filters */}
@@ -100,6 +132,23 @@ export default async function ReservasPage({
               {statusOptions.map((opt) => (
                 <option key={opt.value} value={opt.value}>
                   {opt.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Staff Filter */}
+          <div className="flex items-center gap-2">
+            <User className="w-4 h-4 text-muted" />
+            <select
+              name="staff"
+              defaultValue={params.staff || 'all'}
+              className="px-3 py-2 rounded-lg border border-border text-sm focus:border-accent focus:ring-2 focus:ring-accent/20 outline-none"
+            >
+              <option value="all">Todos los especialistas</option>
+              {staffList.map((staff) => (
+                <option key={staff.id} value={staff.id}>
+                  {staff.name}
                 </option>
               ))}
             </select>
@@ -123,7 +172,7 @@ export default async function ReservasPage({
             Filtrar
           </button>
 
-          {(params.status || params.date) && (
+          {(params.status || params.date || params.staff) && (
             <Link
               href="/admin/reservas"
               className="px-4 py-2 text-muted hover:text-secondary text-sm"
@@ -147,6 +196,9 @@ export default async function ReservasPage({
                   Servicio
                 </th>
                 <th className="text-left px-6 py-4 text-sm font-medium text-secondary">
+                  Especialista
+                </th>
+                <th className="text-left px-6 py-4 text-sm font-medium text-secondary">
                   Fecha
                 </th>
                 <th className="text-left px-6 py-4 text-sm font-medium text-secondary">
@@ -163,7 +215,7 @@ export default async function ReservasPage({
             <tbody className="divide-y divide-border">
               {appointments.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center text-muted">
+                  <td colSpan={7} className="px-6 py-12 text-center text-muted">
                     No se encontraron reservas
                   </td>
                 </tr>
@@ -171,6 +223,7 @@ export default async function ReservasPage({
                 appointments.map((apt) => {
                   const service = apt.services as { name: string; fa_icon: string } | null
                   const client = apt.clients as { full_name: string; phone: string; email: string | null } | null
+                  const staff = apt.staff as Staff | null
                   const status = APPOINTMENT_STATUS[apt.status as keyof typeof APPOINTMENT_STATUS]
 
                   return (
@@ -193,6 +246,21 @@ export default async function ReservasPage({
                           </div>
                           <span className="text-secondary">{service?.name}</span>
                         </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        {staff ? (
+                          <div className="flex items-center gap-2">
+                            <div
+                              className="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-medium"
+                              style={{ backgroundColor: staff.color }}
+                            >
+                              {staff.name.charAt(0)}
+                            </div>
+                            <span className="text-secondary text-sm">{staff.name}</span>
+                          </div>
+                        ) : (
+                          <span className="text-muted text-sm">Sin asignar</span>
+                        )}
                       </td>
                       <td className="px-6 py-4 text-secondary">
                         {format(parseISO(apt.appointment_date), "d MMM yyyy", { locale: es })}
@@ -233,7 +301,7 @@ export default async function ReservasPage({
             <div className="flex gap-2">
               {page > 1 && (
                 <Link
-                  href={`/admin/reservas?page=${page - 1}${params.status ? `&status=${params.status}` : ''}${params.date ? `&date=${params.date}` : ''}`}
+                  href={`/admin/reservas?page=${page - 1}${params.status ? `&status=${params.status}` : ''}${params.date ? `&date=${params.date}` : ''}${params.staff ? `&staff=${params.staff}` : ''}`}
                   className="px-3 py-1 text-sm bg-surface rounded-lg hover:bg-border transition-colors"
                 >
                   Anterior
@@ -241,7 +309,7 @@ export default async function ReservasPage({
               )}
               {page < totalPages && (
                 <Link
-                  href={`/admin/reservas?page=${page + 1}${params.status ? `&status=${params.status}` : ''}${params.date ? `&date=${params.date}` : ''}`}
+                  href={`/admin/reservas?page=${page + 1}${params.status ? `&status=${params.status}` : ''}${params.date ? `&date=${params.date}` : ''}${params.staff ? `&staff=${params.staff}` : ''}`}
                   className="px-3 py-1 text-sm bg-surface rounded-lg hover:bg-border transition-colors"
                 >
                   Siguiente

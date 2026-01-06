@@ -7,6 +7,7 @@ import { sendBookingConfirmation, sendAdminNotification } from '@/lib/email/send
 
 interface BookingData {
   serviceId: string
+  staffId: string
   date: string // ISO date string
   time: string // HH:mm format
   fullName: string
@@ -54,6 +55,29 @@ interface ServiceDetailsData {
   price: number | null
 }
 
+interface StaffScheduleData {
+  day_of_week: string
+  open_time: string
+  close_time: string
+  is_closed: boolean
+}
+
+interface StaffSpecialDateData {
+  is_closed: boolean
+  open_time: string | null
+  close_time: string | null
+}
+
+interface StaffTimeBlockData {
+  start_datetime: string
+  end_datetime: string
+}
+
+interface StaffData {
+  id: string
+  name: string
+}
+
 interface ClientIdData {
   id: string
 }
@@ -62,36 +86,81 @@ interface AppointmentIdData {
   id: string
 }
 
-// Get available time slots for a specific date and service
-export async function getAvailableSlots(serviceId: string, date: string) {
+// Get available time slots for a specific date, service and staff member
+export async function getAvailableSlots(serviceId: string, date: string, staffId: string) {
   const supabase = await createClient()
   const selectedDate = new Date(date)
   const dayOfWeek = format(selectedDate, 'EEEE').toLowerCase() as
     | 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday'
 
-  // Get business hours for this day
-  const { data: businessHoursData } = await supabase
-    .from('business_hours')
+  // Get staff schedule for this day
+  const { data: staffScheduleData } = await supabase
+    .from('staff_schedules')
     .select('*')
+    .eq('staff_id', staffId)
     .eq('day_of_week', dayOfWeek)
     .single()
 
-  const businessHours = businessHoursData as BusinessHoursData | null
+  const staffSchedule = staffScheduleData as StaffScheduleData | null
 
-  if (!businessHours || businessHours.is_closed) {
+  // If no staff schedule, fall back to global business hours
+  let openTime: string
+  let closeTime: string
+  let isClosed = false
+
+  if (staffSchedule) {
+    if (staffSchedule.is_closed) {
+      return { slots: [], error: null }
+    }
+    openTime = staffSchedule.open_time
+    closeTime = staffSchedule.close_time
+  } else {
+    // Fall back to global business hours
+    const { data: businessHoursData } = await supabase
+      .from('business_hours')
+      .select('*')
+      .eq('day_of_week', dayOfWeek)
+      .single()
+
+    const businessHours = businessHoursData as BusinessHoursData | null
+
+    if (!businessHours || businessHours.is_closed) {
+      return { slots: [], error: null }
+    }
+    openTime = businessHours.open_time
+    closeTime = businessHours.close_time
+  }
+
+  // Check for staff-specific special dates
+  const { data: staffSpecialDateData } = await supabase
+    .from('staff_special_dates')
+    .select('*')
+    .eq('staff_id', staffId)
+    .eq('date', date)
+    .single()
+
+  const staffSpecialDate = staffSpecialDateData as StaffSpecialDateData | null
+
+  if (staffSpecialDate?.is_closed) {
     return { slots: [], error: null }
   }
 
-  // Check for special dates
-  const { data: specialDateData } = await supabase
+  // Override hours with staff special date if present
+  if (staffSpecialDate && !staffSpecialDate.is_closed) {
+    if (staffSpecialDate.open_time) openTime = staffSpecialDate.open_time
+    if (staffSpecialDate.close_time) closeTime = staffSpecialDate.close_time
+  }
+
+  // Also check global special dates
+  const { data: globalSpecialDateData } = await supabase
     .from('special_dates')
     .select('*')
     .eq('date', date)
     .single()
 
-  const specialDate = specialDateData as SpecialDateData | null
+  const globalSpecialDate = globalSpecialDateData as SpecialDateData | null
 
-  if (specialDate?.is_closed) {
+  if (globalSpecialDate?.is_closed) {
     return { slots: [], error: null }
   }
 
@@ -105,33 +174,42 @@ export async function getAvailableSlots(serviceId: string, date: string) {
   const service = serviceData as ServiceData | null
   const serviceDuration = service?.duration_minutes || 60
 
-  // Get existing appointments for this date
+  // Get existing appointments for this staff member on this date
   const { data: appointmentsData } = await supabase
     .from('appointments')
     .select('start_time, end_time')
     .eq('appointment_date', date)
+    .eq('staff_id', staffId)
     .in('status', ['pending', 'confirmed'])
 
   const appointments = (appointmentsData || []) as AppointmentSlot[]
 
-  // Get time blocks for this date
+  // Get staff-specific time blocks for this date
   const dateStart = new Date(date)
   dateStart.setHours(0, 0, 0, 0)
   const dateEnd = new Date(date)
   dateEnd.setHours(23, 59, 59, 999)
 
-  const { data: timeBlocksData } = await supabase
+  const { data: staffTimeBlocksData } = await supabase
+    .from('staff_time_blocks')
+    .select('start_datetime, end_datetime')
+    .eq('staff_id', staffId)
+    .gte('start_datetime', dateStart.toISOString())
+    .lte('end_datetime', dateEnd.toISOString())
+
+  const staffTimeBlocks = (staffTimeBlocksData || []) as StaffTimeBlockData[]
+
+  // Also get global time blocks
+  const { data: globalTimeBlocksData } = await supabase
     .from('time_blocks')
     .select('start_datetime, end_datetime')
     .gte('start_datetime', dateStart.toISOString())
     .lte('end_datetime', dateEnd.toISOString())
 
-  const timeBlocks = (timeBlocksData || []) as TimeBlockData[]
+  const globalTimeBlocks = (globalTimeBlocksData || []) as TimeBlockData[]
+  const allTimeBlocks = [...staffTimeBlocks, ...globalTimeBlocks]
 
   // Generate time slots
-  const openTime = specialDate?.open_time || businessHours.open_time
-  const closeTime = specialDate?.close_time || businessHours.close_time
-
   const slots: { time: string; available: boolean }[] = []
   const slotInterval = 30 // minutes between slots
 
@@ -155,7 +233,7 @@ export async function getAvailableSlots(serviceId: string, date: string) {
     })
 
     // Check if slot conflicts with time blocks
-    const hasBlockConflict = (timeBlocks || []).some(block => {
+    const hasBlockConflict = allTimeBlocks.some(block => {
       const blockStart = new Date(block.start_datetime)
       const blockEnd = new Date(block.end_datetime)
       const slotStartFull = new Date(date)
@@ -174,6 +252,80 @@ export async function getAvailableSlots(serviceId: string, date: string) {
   }
 
   return { slots, error: null }
+}
+
+// Get staff members who can perform a specific service
+export async function getStaffForServiceBooking(serviceId: string) {
+  const supabase = await createClient()
+
+  const { data, error } = await supabase
+    .from('staff_services')
+    .select('staff(id, name, color, specialty, avatar_url)')
+    .eq('service_id', serviceId)
+
+  if (error) {
+    console.error('Error fetching staff for service:', error)
+    return []
+  }
+
+  // Extract staff from the nested structure and filter active ones
+  const staffList = (data || [])
+    .map(item => (item as { staff: StaffData & { color: string; specialty: string; avatar_url: string } }).staff)
+    .filter(staff => staff !== null)
+
+  // Additionally filter by active and can_receive_appointments
+  const { data: activeStaff } = await supabase
+    .from('staff')
+    .select('id')
+    .eq('is_active', true)
+    .eq('can_receive_appointments', true)
+
+  const activeIds = new Set((activeStaff || []).map(s => (s as { id: string }).id))
+
+  return staffList.filter(staff => activeIds.has(staff.id))
+}
+
+// Get closed days for a specific staff member
+export async function getStaffClosedDays(staffId: string) {
+  const supabase = await createClient()
+
+  const { data: staffSchedulesData } = await supabase
+    .from('staff_schedules')
+    .select('day_of_week, is_closed')
+    .eq('staff_id', staffId)
+    .eq('is_closed', true)
+
+  const staffSchedules = (staffSchedulesData || []) as { day_of_week: string; is_closed: boolean }[]
+
+  const dayMap: Record<string, number> = {
+    sunday: 0,
+    monday: 1,
+    tuesday: 2,
+    wednesday: 3,
+    thursday: 4,
+    friday: 5,
+    saturday: 6,
+  }
+
+  return staffSchedules.map(h => dayMap[h.day_of_week])
+}
+
+// Get staff special closed dates
+export async function getStaffSpecialDates(staffId: string) {
+  const supabase = await createClient()
+
+  const today = format(new Date(), 'yyyy-MM-dd')
+
+  const { data: staffSpecialDatesData } = await supabase
+    .from('staff_special_dates')
+    .select('date, is_closed')
+    .eq('staff_id', staffId)
+    .gte('date', today)
+    .eq('is_closed', true)
+
+  const staffSpecialDates = (staffSpecialDatesData || []) as { date: string; is_closed: boolean }[]
+
+  return staffSpecialDates.map(d => new Date(d.date))
 }
 
 // Create a new booking
@@ -195,7 +347,7 @@ export async function createBooking(data: BookingData): Promise<BookingResult> {
     }
 
     // Check slot availability again
-    const { slots } = await getAvailableSlots(data.serviceId, data.date)
+    const { slots } = await getAvailableSlots(data.serviceId, data.date, data.staffId)
     const selectedSlot = slots.find(s => s.time === data.time)
 
     if (!selectedSlot?.available) {
@@ -255,6 +407,7 @@ export async function createBooking(data: BookingData): Promise<BookingResult> {
       .insert({
         client_id: clientId,
         service_id: data.serviceId,
+        staff_id: data.staffId,
         appointment_date: data.date,
         start_time: data.time,
         end_time: endTimeStr,

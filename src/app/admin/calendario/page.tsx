@@ -18,6 +18,8 @@ import {
   Plus,
   Trash2,
   AlertCircle,
+  Users,
+  Filter,
 } from 'lucide-react'
 import {
   format,
@@ -48,6 +50,12 @@ import {
   deleteTimeBlock,
 } from '@/lib/actions/schedule'
 
+interface Staff {
+  id: string
+  name: string
+  color: string
+}
+
 interface Appointment {
   id: string
   appointment_date: string
@@ -57,7 +65,7 @@ interface Appointment {
   staff_id: string | null
   services: { name: string; fa_icon: string } | null
   clients: { full_name: string; phone: string } | null
-  staff: { name: string; color: string } | null
+  staff: { id: string; name: string; color: string } | null
 }
 
 interface BusinessHour {
@@ -105,6 +113,11 @@ export default function CalendarioPage() {
   const [calendarView, setCalendarView] = useState<'month' | 'list'>('month')
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
 
+  // Staff filter states
+  const [staffList, setStaffList] = useState<Staff[]>([])
+  const [selectedStaffId, setSelectedStaffId] = useState<string | null>(null)
+  const [showStaffFilter, setShowStaffFilter] = useState(false)
+
   // Settings states
   const [settingsTab, setSettingsTab] = useState<SettingsTab>('hours')
   const [businessHours, setBusinessHours] = useState<BusinessHour[]>([])
@@ -128,6 +141,17 @@ export default function CalendarioPage() {
     reason: '',
   })
 
+  const loadStaffList = useCallback(async () => {
+    const supabase = createClient()
+    const { data } = await supabase
+      .from('staff')
+      .select('id, name, color')
+      .eq('is_active', true)
+      .order('name')
+
+    setStaffList((data || []) as Staff[])
+  }, [])
+
   const loadAppointments = useCallback(async () => {
     setIsLoading(true)
     const supabase = createClient()
@@ -137,7 +161,7 @@ export default function CalendarioPage() {
 
     const { data } = await supabase
       .from('appointments')
-      .select('*, services(name, fa_icon), clients(full_name, phone), staff(name, color)')
+      .select('*, services(name, fa_icon), clients(full_name, phone), staff(id, name, color)')
       .gte('appointment_date', format(monthStart, 'yyyy-MM-dd'))
       .lte('appointment_date', format(monthEnd, 'yyyy-MM-dd'))
       .order('appointment_date')
@@ -161,7 +185,20 @@ export default function CalendarioPage() {
   useEffect(() => {
     loadAppointments()
     loadScheduleSettings()
-  }, [loadAppointments, loadScheduleSettings])
+    loadStaffList()
+  }, [loadAppointments, loadScheduleSettings, loadStaffList])
+
+  // Close staff filter dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      const target = event.target as HTMLElement
+      if (showStaffFilter && !target.closest('[data-staff-filter]')) {
+        setShowStaffFilter(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [showStaffFilter])
 
   const goToPreviousMonth = () => setCurrentDate(subMonths(currentDate, 1))
   const goToNextMonth = () => setCurrentDate(addMonths(currentDate, 1))
@@ -177,8 +214,13 @@ export default function CalendarioPage() {
   const calendarEnd = endOfWeek(monthEnd, { weekStartsOn: 1 })
   const calendarDays = eachDayOfInterval({ start: calendarStart, end: calendarEnd })
 
+  // Filtered appointments based on selected staff
+  const filteredAppointments = selectedStaffId
+    ? appointments.filter(apt => apt.staff?.id === selectedStaffId)
+    : appointments
+
   const getAppointmentsForDay = (day: Date) => {
-    return appointments.filter((apt) =>
+    return filteredAppointments.filter((apt) =>
       isSameDay(parseISO(apt.appointment_date), day)
     )
   }
@@ -388,10 +430,66 @@ export default function CalendarioPage() {
               </button>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <Button variant="outline" size="sm" onClick={goToToday}>
                 Hoy
               </Button>
+
+              {/* Staff Filter */}
+              <div className="relative" data-staff-filter>
+                <button
+                  onClick={() => setShowStaffFilter(!showStaffFilter)}
+                  className={`flex items-center gap-2 px-3 py-1.5 text-sm border rounded-lg transition-colors ${
+                    selectedStaffId
+                      ? 'border-accent bg-accent/10 text-accent'
+                      : 'border-gray-200 hover:bg-gray-100'
+                  }`}
+                >
+                  <Users className="w-4 h-4" />
+                  {selectedStaffId
+                    ? staffList.find(s => s.id === selectedStaffId)?.name || 'Colaborador'
+                    : 'Todos'}
+                  <Filter className="w-3 h-3" />
+                </button>
+
+                {showStaffFilter && (
+                  <div className="absolute right-0 top-full mt-2 w-56 bg-white border border-gray-200 rounded-xl shadow-lg z-50">
+                    <div className="p-2">
+                      <button
+                        onClick={() => {
+                          setSelectedStaffId(null)
+                          setShowStaffFilter(false)
+                        }}
+                        className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-lg transition-colors ${
+                          !selectedStaffId ? 'bg-accent/10 text-accent' : 'hover:bg-gray-100'
+                        }`}
+                      >
+                        <Users className="w-4 h-4" />
+                        Todos los colaboradores
+                      </button>
+                      {staffList.map((staff) => (
+                        <button
+                          key={staff.id}
+                          onClick={() => {
+                            setSelectedStaffId(staff.id)
+                            setShowStaffFilter(false)
+                          }}
+                          className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-lg transition-colors ${
+                            selectedStaffId === staff.id ? 'bg-accent/10 text-accent' : 'hover:bg-gray-100'
+                          }`}
+                        >
+                          <span
+                            className="w-3 h-3 rounded-full flex-shrink-0"
+                            style={{ backgroundColor: staff.color }}
+                          />
+                          {staff.name}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
               <div className="flex border border-gray-200 rounded-lg overflow-hidden">
                 <button
                   onClick={() => setCalendarView('month')}
@@ -609,12 +707,12 @@ export default function CalendarioPage() {
             /* List View */
             <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
               <div className="divide-y divide-gray-200">
-                {appointments.length === 0 ? (
+                {filteredAppointments.length === 0 ? (
                   <div className="p-8 text-center text-gray-500">
-                    No hay citas este mes
+                    {selectedStaffId ? 'No hay citas para este colaborador' : 'No hay citas este mes'}
                   </div>
                 ) : (
-                  appointments.map((apt) => {
+                  filteredAppointments.map((apt) => {
                     const service = apt.services as { name: string; fa_icon: string } | null
                     const client = apt.clients as { full_name: string; phone: string } | null
                     const staff = apt.staff as { name: string; color: string } | null
@@ -673,18 +771,49 @@ export default function CalendarioPage() {
 
           {/* Legend */}
           <div className="bg-white rounded-2xl border border-gray-200 p-4">
-            <h4 className="text-sm font-medium text-gray-900 mb-3">Estados</h4>
-            <div className="flex flex-wrap gap-3">
-              {Object.entries(APPOINTMENT_STATUS).map(([key, value]) => (
-                <div key={key} className="flex items-center gap-2">
-                  <span className={`w-3 h-3 rounded-full ${value.color.split(' ')[0]}`} />
-                  <span className="text-xs text-gray-500">{value.label}</span>
+            <div className="flex flex-col md:flex-row md:items-start gap-6">
+              {/* Status Legend */}
+              <div>
+                <h4 className="text-sm font-medium text-gray-900 mb-3">Estados</h4>
+                <div className="flex flex-wrap gap-3">
+                  {Object.entries(APPOINTMENT_STATUS).map(([key, value]) => (
+                    <div key={key} className="flex items-center gap-2">
+                      <span className={`w-3 h-3 rounded-full ${value.color.split(' ')[0]}`} />
+                      <span className="text-xs text-gray-500">{value.label}</span>
+                    </div>
+                  ))}
+                  <div className="flex items-center gap-2">
+                    <CalendarOff className="w-3 h-3 text-red-500" />
+                    <span className="text-xs text-gray-500">Día cerrado</span>
+                  </div>
                 </div>
-              ))}
-              <div className="flex items-center gap-2">
-                <CalendarOff className="w-3 h-3 text-red-500" />
-                <span className="text-xs text-gray-500">Día cerrado</span>
               </div>
+
+              {/* Staff Legend */}
+              {staffList.length > 0 && (
+                <div className="md:border-l md:border-gray-200 md:pl-6">
+                  <h4 className="text-sm font-medium text-gray-900 mb-3">Colaboradores</h4>
+                  <div className="flex flex-wrap gap-3">
+                    {staffList.map((staff) => (
+                      <button
+                        key={staff.id}
+                        onClick={() => setSelectedStaffId(selectedStaffId === staff.id ? null : staff.id)}
+                        className={`flex items-center gap-2 px-2 py-1 rounded-lg transition-colors ${
+                          selectedStaffId === staff.id
+                            ? 'bg-accent/10 ring-1 ring-accent'
+                            : 'hover:bg-gray-100'
+                        }`}
+                      >
+                        <span
+                          className="w-3 h-3 rounded-full"
+                          style={{ backgroundColor: staff.color }}
+                        />
+                        <span className="text-xs text-gray-600">{staff.name}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </>

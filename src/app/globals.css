@@ -29,13 +29,77 @@
     opacity: 0;
   }
 
-  /* Custom scrollbar */
+  /* Custom scrollbar - Hidden */
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }
   .scrollbar-hide {
     -ms-overflow-style: none;
     scrollbar-width: none;
+  }
+
+  /* Custom scrollbar - Styled */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: #F9F5F6;
+    border-radius: 10px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #F0769C 0%, #E05580 100%);
+    border-radius: 10px;
+    transition: background 0.3s ease;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, #E05580 0%, #D04670 100%);
+  }
+  .custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: #F0769C #F9F5F6;
+  }
+
+  /* Custom scrollbar - Thin variant */
+  .custom-scrollbar-thin::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+  .custom-scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+    border-radius: 10px;
+  }
+  .custom-scrollbar-thin::-webkit-scrollbar-thumb {
+    background: #F0769C;
+    border-radius: 10px;
+  }
+  .custom-scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: #E05580;
+  }
+  .custom-scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: #F0769C transparent;
+  }
+
+  /* Custom scrollbar - Dark variant */
+  .custom-scrollbar-dark::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  .custom-scrollbar-dark::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+  }
+  .custom-scrollbar-dark::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 10px;
+  }
+  .custom-scrollbar-dark::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 0, 0, 0.5);
+  }
+  .custom-scrollbar-dark {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 0, 0, 0.3) rgba(0, 0, 0, 0.1);
   }
 
   /* Text gradient effect */

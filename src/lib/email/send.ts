@@ -4,6 +4,7 @@ import { getResend, EMAIL_FROM, ADMIN_EMAIL } from './resend'
 import { BookingConfirmationEmail } from './templates/booking-confirmation'
 import { AdminNotificationEmail } from './templates/admin-notification'
 import { AppointmentReminderEmail } from './templates/appointment-reminder'
+import { StaffInvitationEmail } from './templates/staff-invitation'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 
@@ -174,5 +175,43 @@ export async function sendAppointmentReminder({
   } catch (error) {
     console.error('Error sending reminder:', error)
     return { success: false, error: 'Failed to send email' }
+  }
+}
+
+interface SendStaffInvitationParams {
+  to: string
+  staffName: string
+  token: string
+}
+
+export async function sendStaffInvitation({
+  to,
+  staffName,
+  token,
+}: SendStaffInvitationParams) {
+  try {
+    const invitationLink = `${SITE_URL}/auth/invitacion?token=${token}`
+
+    const resend = getResend()
+    const { data, error } = await resend.emails.send({
+      from: EMAIL_FROM,
+      to,
+      subject: 'Invitacion al Portal de Colaboradores - Esthetic For Live',
+      react: StaffInvitationEmail({
+        staffName,
+        invitationLink,
+      }),
+    })
+
+    if (error) {
+      console.error('Error sending staff invitation:', error)
+      return { success: false, error: error.message }
+    }
+
+    console.log('Staff invitation sent:', data?.id)
+    return { success: true, id: data?.id }
+  } catch (error) {
+    console.error('Error sending staff invitation:', error)
+    return { success: false, error: 'Failed to send invitation email' }
   }
 }
