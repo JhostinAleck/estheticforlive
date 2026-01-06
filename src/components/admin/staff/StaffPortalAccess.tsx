@@ -81,10 +81,10 @@ export function StaffPortalAccess({
     setIsLoading(false)
 
     if (result.success) {
-      // Si hay link de desarrollo, mostrarlo
+      // Si hay link directo (email no se pudo enviar), mostrarlo
       if (result.invitationLink) {
         setDevInvitationLink(result.invitationLink)
-        toast.success(result.message || 'Invitacion generada (modo desarrollo)')
+        toast.success(result.message || 'Invitacion generada')
       } else {
         toast.success('Invitacion enviada exitosamente')
       }
@@ -103,7 +103,7 @@ export function StaffPortalAccess({
     if (result.success) {
       if (result.invitationLink) {
         setDevInvitationLink(result.invitationLink)
-        toast.success(result.message || 'Link regenerado (modo desarrollo)')
+        toast.success(result.message || 'Link regenerado')
       } else {
         toast.success('Invitacion reenviada')
       }
@@ -316,15 +316,15 @@ export function StaffPortalAccess({
           </div>
         )}
 
-        {/* Development mode: show direct invitation link */}
+        {/* Show direct invitation link when email couldn't be sent */}
         {devInvitationLink && (
           <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
             <h4 className="font-medium text-blue-900 mb-2 flex items-center gap-2">
               <LinkIcon className="w-4 h-4" />
-              Link de Invitacion (Desarrollo)
+              Link de Invitacion Directo
             </h4>
             <p className="text-sm text-blue-700 mb-3">
-              El email no pudo enviarse (dominio no verificado en Resend). Usa este link directamente:
+              El email no pudo enviarse. Comparte este link directamente con el colaborador:
             </p>
             <div className="bg-white rounded-lg p-3 border border-blue-200">
               <code className="text-xs text-blue-800 break-all block">

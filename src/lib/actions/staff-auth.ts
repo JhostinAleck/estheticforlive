@@ -118,18 +118,14 @@ export async function inviteStaffMember(staffId: string): Promise<ActionResult> 
 
   revalidatePath(`/admin/personal/${staffId}`)
 
-  // Si el email falló pero estamos en desarrollo, devolver el link
+  // Si el email falló, devolver el link directo para que el admin pueda compartirlo manualmente
   if (!emailResult.success) {
     console.error('Error sending invitation email:', emailResult.error)
-    // En desarrollo, devolver el link para poder probar
-    if (process.env.NODE_ENV === 'development') {
-      return {
-        success: true,
-        invitationLink,
-        message: 'Email no enviado (sin dominio verificado). Usa el link directo.'
-      }
+    return {
+      success: true,
+      invitationLink,
+      message: 'El email no pudo enviarse. Comparte este link directamente con el colaborador.'
     }
-    return { success: false, error: 'Error al enviar email de invitación' }
   }
 
   return { success: true }
