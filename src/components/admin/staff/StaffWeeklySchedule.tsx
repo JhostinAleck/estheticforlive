@@ -95,7 +95,7 @@ export function StaffWeeklySchedule({ staffId, isAdmin = false }: StaffWeeklySch
     setIsSaving(true)
     let hasError = false
 
-    for (const day of editedDays) {
+    for (const day of Array.from(editedDays)) {
       const schedule = getScheduleForDay(day)
       if (!schedule) continue
 

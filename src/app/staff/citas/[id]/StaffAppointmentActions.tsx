@@ -7,6 +7,8 @@ import { Button } from '@/components/ui/Button'
 import { Check, X, CheckCircle } from 'lucide-react'
 import { updateAppointmentStatus } from '@/lib/actions/appointments'
 
+type AppointmentStatus = 'pending' | 'confirmed' | 'completed' | 'cancelled' | 'no_show'
+
 interface StaffAppointmentActionsProps {
   appointmentId: string
   currentStatus: string
@@ -25,7 +27,7 @@ export function StaffAppointmentActions({
   const router = useRouter()
   const [isLoading, setIsLoading] = useState<string | null>(null)
 
-  async function handleStatusChange(newStatus: string) {
+  async function handleStatusChange(newStatus: AppointmentStatus) {
     setIsLoading(newStatus)
 
     const result = await updateAppointmentStatus(appointmentId, newStatus)

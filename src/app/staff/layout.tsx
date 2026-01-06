@@ -49,12 +49,14 @@ export default async function StaffLayout({
     .eq('staff_id', staff.id)
     .single()
 
-  const permissions: StaffPermissions = (permissionsData as StaffPermissions) || {
+  const defaultPermissions: StaffPermissions = {
     can_view_appointments: true,
     can_edit_own_schedule: true,
     can_add_time_blocks: true,
     can_add_special_dates: true,
   }
+
+  const permissions: StaffPermissions = permissionsData ? (permissionsData as StaffPermissions) : defaultPermissions
 
   return (
     <div className="min-h-screen bg-surface">

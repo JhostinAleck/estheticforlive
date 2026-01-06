@@ -87,19 +87,15 @@ export default async function StaffCitaDetailPage({ params }: PageProps) {
     .eq('staff_id', staff.id)
     .single()
 
-  const permissions = (permissionsData as {
-    can_confirm_appointments: boolean
-    can_complete_appointments: boolean
-    can_cancel_appointments: boolean
-    can_view_client_info: boolean
-    can_view_client_history: boolean
-  }) || {
+  const defaultPermissions = {
     can_confirm_appointments: true,
     can_complete_appointments: true,
     can_cancel_appointments: true,
     can_view_client_info: true,
     can_view_client_history: false,
   }
+
+  const permissions = permissionsData ? (permissionsData as typeof defaultPermissions) : defaultPermissions
 
   const getStatusColor = (status: string) => {
     switch (status) {

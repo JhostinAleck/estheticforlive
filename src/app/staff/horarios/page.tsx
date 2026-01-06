@@ -31,15 +31,13 @@ export default async function StaffHorariosPage() {
     .eq('staff_id', staff.id)
     .single()
 
-  const permissions = (permissionsData as {
-    can_edit_own_schedule: boolean
-    can_add_time_blocks: boolean
-    can_add_special_dates: boolean
-  }) || {
+  const defaultPermissions = {
     can_edit_own_schedule: true,
     can_add_time_blocks: true,
     can_add_special_dates: true,
   }
+
+  const permissions = permissionsData ? (permissionsData as typeof defaultPermissions) : defaultPermissions
 
   // Check if user has any schedule permissions
   const hasAnyPermission = permissions.can_edit_own_schedule ||

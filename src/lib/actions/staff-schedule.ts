@@ -136,7 +136,8 @@ export async function copyFromBusinessHours(staffId: string): Promise<ActionResu
   }
 
   // Update staff schedules
-  for (const bh of businessHours) {
+  type BusinessHour = { day_of_week: number; open_time: string; close_time: string; is_closed: boolean }
+  for (const bh of (businessHours as BusinessHour[])) {
     const { error } = await adminClient
       .from('staff_schedules')
       .update({
