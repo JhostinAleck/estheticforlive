@@ -5,6 +5,7 @@ import { BookingConfirmationEmail } from './templates/booking-confirmation'
 import { AdminNotificationEmail } from './templates/admin-notification'
 import { AppointmentReminderEmail } from './templates/appointment-reminder'
 import { StaffInvitationEmail } from './templates/staff-invitation'
+import { render } from '@react-email/render'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 
@@ -41,19 +42,21 @@ export async function sendBookingConfirmation({
     const formattedDate = format(appointmentDate, "EEEE d 'de' MMMM, yyyy", { locale: es })
     const whatsappMessage = `Hola, tengo una cita el ${formattedDate} a las ${appointmentTime} para ${serviceName}. `
 
+    const emailHtml = await render(BookingConfirmationEmail({
+      clientName,
+      serviceName,
+      appointmentDate: formattedDate,
+      appointmentTime,
+      staffName,
+      whatsappLink: generateWhatsAppLink(whatsappMessage),
+    }))
+
     const resend = getResend()
     const { data, error } = await resend.emails.send({
       from: EMAIL_FROM,
       to: clientEmail,
       subject: `Cita Confirmada - ${serviceName}`,
-      react: BookingConfirmationEmail({
-        clientName,
-        serviceName,
-        appointmentDate: formattedDate,
-        appointmentTime,
-        staffName,
-        whatsappLink: generateWhatsAppLink(whatsappMessage),
-      }),
+      html: emailHtml,
     })
 
     if (error) {
@@ -94,21 +97,23 @@ export async function sendAdminNotification({
     const formattedDate = format(appointmentDate, "EEEE d 'de' MMMM, yyyy", { locale: es })
     const adminUrl = `${SITE_URL}/admin/reservas/${appointmentId}`
 
+    const emailHtml = await render(AdminNotificationEmail({
+      clientName,
+      clientPhone,
+      clientEmail,
+      serviceName,
+      appointmentDate: formattedDate,
+      appointmentTime,
+      clientNotes,
+      adminUrl,
+    }))
+
     const resend = getResend()
     const { data, error } = await resend.emails.send({
       from: EMAIL_FROM,
       to: ADMIN_EMAIL,
       subject: `Nueva Reserva: ${clientName} - ${serviceName}`,
-      react: AdminNotificationEmail({
-        clientName,
-        clientPhone,
-        clientEmail,
-        serviceName,
-        appointmentDate: formattedDate,
-        appointmentTime,
-        clientNotes,
-        adminUrl,
-      }),
+      html: emailHtml,
     })
 
     if (error) {
@@ -150,19 +155,21 @@ export async function sendAppointmentReminder({
     const formattedDate = format(appointmentDate, "EEEE d 'de' MMMM", { locale: es })
     const whatsappMessage = `Hola, tengo una cita manana a las ${appointmentTime} para ${serviceName}. `
 
+    const emailHtml = await render(AppointmentReminderEmail({
+      clientName,
+      serviceName,
+      appointmentDate: formattedDate,
+      appointmentTime,
+      staffName,
+      whatsappLink: generateWhatsAppLink(whatsappMessage),
+    }))
+
     const resend = getResend()
     const { data, error } = await resend.emails.send({
       from: EMAIL_FROM,
       to: clientEmail,
       subject: `Recordatorio: Tu cita es manana - ${serviceName}`,
-      react: AppointmentReminderEmail({
-        clientName,
-        serviceName,
-        appointmentDate: formattedDate,
-        appointmentTime,
-        staffName,
-        whatsappLink: generateWhatsAppLink(whatsappMessage),
-      }),
+      html: emailHtml,
     })
 
     if (error) {
@@ -192,15 +199,17 @@ export async function sendStaffInvitation({
   try {
     const invitationLink = `${SITE_URL}/auth/invitacion?token=${token}`
 
+    const emailHtml = await render(StaffInvitationEmail({
+      staffName,
+      invitationLink,
+    }))
+
     const resend = getResend()
     const { data, error } = await resend.emails.send({
       from: EMAIL_FROM,
       to,
       subject: 'Invitacion al Portal de Colaboradores - Esthetic For Live',
-      react: StaffInvitationEmail({
-        staffName,
-        invitationLink,
-      }),
+      html: emailHtml,
     })
 
     if (error) {

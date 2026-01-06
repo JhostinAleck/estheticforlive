@@ -8,6 +8,8 @@ import { sendStaffInvitation } from '@/lib/email/send'
 interface ActionResult {
   success: boolean
   error?: string
+  invitationLink?: string
+  message?: string
 }
 
 interface StaffPermissions {
@@ -103,19 +105,33 @@ export async function inviteStaffMember(staffId: string): Promise<ActionResult> 
     return { success: false, error: 'Error al generar invitación' }
   }
 
+  // Generar link de invitación
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
+  const invitationLink = `${siteUrl}/auth/invitacion?token=${newToken}`
+
   // Enviar email de invitación
-  try {
-    await sendStaffInvitation({
-      to: staff.email,
-      staffName: staff.name,
-      token: newToken,
-    })
-  } catch (emailError) {
-    console.error('Error sending invitation email:', emailError)
+  const emailResult = await sendStaffInvitation({
+    to: staff.email,
+    staffName: staff.name,
+    token: newToken,
+  })
+
+  revalidatePath(`/admin/personal/${staffId}`)
+
+  // Si el email falló pero estamos en desarrollo, devolver el link
+  if (!emailResult.success) {
+    console.error('Error sending invitation email:', emailResult.error)
+    // En desarrollo, devolver el link para poder probar
+    if (process.env.NODE_ENV === 'development') {
+      return {
+        success: true,
+        invitationLink,
+        message: 'Email no enviado (sin dominio verificado). Usa el link directo.'
+      }
+    }
     return { success: false, error: 'Error al enviar email de invitación' }
   }
 
-  revalidatePath(`/admin/personal/${staffId}`)
   return { success: true }
 }
 

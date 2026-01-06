@@ -58,6 +58,7 @@ export function StaffPortalAccess({
   const [accessStatus, setAccessStatus] = useState<AccessStatus | null>(null)
   const [showPasswordReset, setShowPasswordReset] = useState(false)
   const [newPassword, setNewPassword] = useState('')
+  const [devInvitationLink, setDevInvitationLink] = useState<string | null>(null)
 
   // Load access status on mount
   useEffect(() => {
@@ -80,7 +81,13 @@ export function StaffPortalAccess({
     setIsLoading(false)
 
     if (result.success) {
-      toast.success('Invitacion enviada exitosamente')
+      // Si hay link de desarrollo, mostrarlo
+      if (result.invitationLink) {
+        setDevInvitationLink(result.invitationLink)
+        toast.success(result.message || 'Invitacion generada (modo desarrollo)')
+      } else {
+        toast.success('Invitacion enviada exitosamente')
+      }
       loadAccessStatus()
       onRefresh()
     } else {
@@ -94,7 +101,12 @@ export function StaffPortalAccess({
     setIsLoading(false)
 
     if (result.success) {
-      toast.success('Invitacion reenviada')
+      if (result.invitationLink) {
+        setDevInvitationLink(result.invitationLink)
+        toast.success(result.message || 'Link regenerado (modo desarrollo)')
+      } else {
+        toast.success('Invitacion reenviada')
+      }
       loadAccessStatus()
     } else {
       toast.error(result.error || 'Error al reenviar invitacion')
@@ -301,6 +313,42 @@ export function StaffPortalAccess({
               <RefreshCw className="w-4 h-4 mr-2" />
               Reenviar Invitacion
             </Button>
+          </div>
+        )}
+
+        {/* Development mode: show direct invitation link */}
+        {devInvitationLink && (
+          <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+            <h4 className="font-medium text-blue-900 mb-2 flex items-center gap-2">
+              <LinkIcon className="w-4 h-4" />
+              Link de Invitacion (Desarrollo)
+            </h4>
+            <p className="text-sm text-blue-700 mb-3">
+              El email no pudo enviarse (dominio no verificado en Resend). Usa este link directamente:
+            </p>
+            <div className="bg-white rounded-lg p-3 border border-blue-200">
+              <code className="text-xs text-blue-800 break-all block">
+                {devInvitationLink}
+              </code>
+            </div>
+            <div className="flex gap-2 mt-3">
+              <Button
+                size="sm"
+                onClick={() => {
+                  navigator.clipboard.writeText(devInvitationLink)
+                  toast.success('Link copiado al portapapeles')
+                }}
+              >
+                Copiar Link
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => window.open(devInvitationLink, '_blank')}
+              >
+                Abrir en nueva pestana
+              </Button>
+            </div>
           </div>
         )}
 
