@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard,
   Calendar,
+  CalendarDays,
   Clock,
   LogOut,
   Menu,
@@ -43,6 +44,12 @@ export function StaffSidebar({ staffName, staffColor, permissions }: StaffSideba
       label: 'Mis Citas',
       href: '/staff/citas',
       icon: Calendar,
+      show: permissions.can_view_appointments,
+    },
+    {
+      label: 'Calendario',
+      href: '/staff/calendario',
+      icon: CalendarDays,
       show: permissions.can_view_appointments,
     },
     {
