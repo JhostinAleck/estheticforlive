@@ -3,18 +3,16 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Save, Upload } from 'lucide-react'
+import { ArrowLeft, Save } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { createResult } from '@/lib/actions/results'
-import { uploadImage } from '@/lib/actions/upload'
+import { ImageUploadSquare } from '@/components/admin/ImageUploadSquare'
 
 export default function NuevoResultadoPage() {
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [uploadingBefore, setUploadingBefore] = useState(false)
-  const [uploadingAfter, setUploadingAfter] = useState(false)
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -24,39 +22,16 @@ export default function NuevoResultadoPage() {
     is_active: true,
   })
 
-  const handleImageUpload = async (file: File, type: 'before' | 'after') => {
-    if (type === 'before') setUploadingBefore(true)
-    else setUploadingAfter(true)
-
-    try {
-      const result = await uploadImage(file, 'results')
-      if (result.success) {
-        setFormData((prev) => ({
-          ...prev,
-          [type === 'before' ? 'before_image_url' : 'after_image_url']: result.url,
-        }))
-        toast.success('Imagen subida correctamente')
-      } else {
-        toast.error(result.error)
-      }
-    } catch {
-      toast.error('Error al subir la imagen')
-    } finally {
-      if (type === 'before') setUploadingBefore(false)
-      else setUploadingAfter(false)
-    }
-  }
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
     if (!formData.title.trim()) {
-      toast.error('El título es requerido')
+      toast.error('El titulo es requerido')
       return
     }
 
     if (!formData.before_image_url || !formData.after_image_url) {
-      toast.error('Debes subir ambas imágenes (antes y después)')
+      toast.error('Debes subir ambas imagenes (antes y despues)')
       return
     }
 
@@ -86,7 +61,7 @@ export default function NuevoResultadoPage() {
           Volver a resultados
         </Link>
         <h1 className="text-2xl font-bold text-secondary">Nuevo Resultado</h1>
-        <p className="text-muted">Agrega una nueva transformación antes/después</p>
+        <p className="text-muted">Agrega una nueva transformacion antes/despues</p>
       </div>
 
       {/* Form */}
@@ -95,7 +70,7 @@ export default function NuevoResultadoPage() {
           {/* Title */}
           <div>
             <label className="block text-sm font-medium text-secondary mb-1">
-              Título *
+              Titulo *
             </label>
             <Input
               value={formData.title}
@@ -108,12 +83,12 @@ export default function NuevoResultadoPage() {
           {/* Description */}
           <div>
             <label className="block text-sm font-medium text-secondary mb-1">
-              Descripción
+              Descripcion
             </label>
             <textarea
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              placeholder="Descripción opcional del tratamiento..."
+              placeholder="Descripcion opcional del tratamiento..."
               rows={3}
               className="w-full px-4 py-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-colors"
             />
@@ -121,86 +96,25 @@ export default function NuevoResultadoPage() {
 
           {/* Images */}
           <div className="grid md:grid-cols-2 gap-4">
-            {/* Before Image */}
-            <div>
-              <label className="block text-sm font-medium text-secondary mb-1">
-                Imagen Antes *
-              </label>
-              <div className="border-2 border-dashed border-border rounded-xl p-4 text-center">
-                {formData.before_image_url ? (
-                  <div className="relative aspect-square mb-2">
-                    <img
-                      src={formData.before_image_url}
-                      alt="Antes"
-                      className="w-full h-full object-cover rounded-lg"
-                    />
-                  </div>
-                ) : (
-                  <div className="aspect-square flex items-center justify-center bg-surface rounded-lg mb-2">
-                    <Upload className="w-8 h-8 text-muted" />
-                  </div>
-                )}
-                <label className="cursor-pointer">
-                  <span className="text-sm text-accent hover:underline">
-                    {uploadingBefore ? 'Subiendo...' : 'Seleccionar imagen'}
-                  </span>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0]
-                      if (file) handleImageUpload(file, 'before')
-                    }}
-                    disabled={uploadingBefore}
-                  />
-                </label>
-              </div>
-            </div>
-
-            {/* After Image */}
-            <div>
-              <label className="block text-sm font-medium text-secondary mb-1">
-                Imagen Después *
-              </label>
-              <div className="border-2 border-dashed border-border rounded-xl p-4 text-center">
-                {formData.after_image_url ? (
-                  <div className="relative aspect-square mb-2">
-                    <img
-                      src={formData.after_image_url}
-                      alt="Después"
-                      className="w-full h-full object-cover rounded-lg"
-                    />
-                  </div>
-                ) : (
-                  <div className="aspect-square flex items-center justify-center bg-surface rounded-lg mb-2">
-                    <Upload className="w-8 h-8 text-muted" />
-                  </div>
-                )}
-                <label className="cursor-pointer">
-                  <span className="text-sm text-accent hover:underline">
-                    {uploadingAfter ? 'Subiendo...' : 'Seleccionar imagen'}
-                  </span>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0]
-                      if (file) handleImageUpload(file, 'after')
-                    }}
-                    disabled={uploadingAfter}
-                  />
-                </label>
-              </div>
-            </div>
+            <ImageUploadSquare
+              value={formData.before_image_url}
+              onChange={(url) => setFormData({ ...formData, before_image_url: url })}
+              folder="results"
+              label="Imagen Antes *"
+            />
+            <ImageUploadSquare
+              value={formData.after_image_url}
+              onChange={(url) => setFormData({ ...formData, after_image_url: url })}
+              folder="results"
+              label="Imagen Despues *"
+            />
           </div>
 
           {/* Order */}
           <div className="grid md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-secondary mb-1">
-                Orden de visualización
+                Orden de visualizacion
               </label>
               <Input
                 type="number"
@@ -210,7 +124,7 @@ export default function NuevoResultadoPage() {
                 }
                 min={0}
               />
-              <p className="text-xs text-muted mt-1">Menor número = aparece primero</p>
+              <p className="text-xs text-muted mt-1">Menor numero = aparece primero</p>
             </div>
 
             <div>
@@ -238,7 +152,7 @@ export default function NuevoResultadoPage() {
           <Button
             type="submit"
             className="flex-1"
-            disabled={isSubmitting || uploadingBefore || uploadingAfter}
+            disabled={isSubmitting}
           >
             <Save className="w-4 h-4 mr-2" />
             {isSubmitting ? 'Guardando...' : 'Guardar Resultado'}
