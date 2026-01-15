@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { format, parse, addMinutes } from 'date-fns'
 import { revalidatePath } from 'next/cache'
 import { sendBookingConfirmation, sendAdminNotification } from '@/lib/email/send'
@@ -330,11 +331,12 @@ export async function getStaffSpecialDates(staffId: string) {
 
 // Create a new booking
 export async function createBooking(data: BookingData): Promise<BookingResult> {
-  const supabase = await createClient()
+  // Use admin client to bypass RLS for write operations
+  const supabaseAdmin = createAdminClient()
 
   try {
     // Get service details
-    const { data: serviceData, error: serviceError } = await supabase
+    const { data: serviceData, error: serviceError } = await supabaseAdmin
       .from('services')
       .select('id, name, duration_minutes, price')
       .eq('id', data.serviceId)
@@ -358,7 +360,7 @@ export async function createBooking(data: BookingData): Promise<BookingResult> {
     let clientId: string
 
     // First try to find existing client by phone
-    const { data: existingClientData } = await supabase
+    const { data: existingClientData } = await supabaseAdmin
       .from('clients')
       .select('id')
       .eq('phone', data.phone)
@@ -369,7 +371,7 @@ export async function createBooking(data: BookingData): Promise<BookingResult> {
     if (existingClient) {
       clientId = existingClient.id
       // Update client info
-      await supabase
+      await supabaseAdmin
         .from('clients')
         .update({
           full_name: data.fullName,
@@ -378,7 +380,7 @@ export async function createBooking(data: BookingData): Promise<BookingResult> {
         .eq('id', clientId)
     } else {
       // Create new client
-      const { data: newClientData, error: clientError } = await supabase
+      const { data: newClientData, error: clientError } = await supabaseAdmin
         .from('clients')
         .insert({
           full_name: data.fullName,
@@ -391,6 +393,7 @@ export async function createBooking(data: BookingData): Promise<BookingResult> {
       const newClient = newClientData as ClientIdData | null
 
       if (clientError || !newClient) {
+        console.error('Client creation error:', clientError)
         return { success: false, error: 'Error al crear el cliente' }
       }
       clientId = newClient.id
@@ -402,7 +405,7 @@ export async function createBooking(data: BookingData): Promise<BookingResult> {
     const endTimeStr = format(endTime, 'HH:mm')
 
     // Create appointment
-    const { data: appointmentData, error: appointmentError } = await supabase
+    const { data: appointmentData, error: appointmentError } = await supabaseAdmin
       .from('appointments')
       .insert({
         client_id: clientId,
@@ -426,7 +429,7 @@ export async function createBooking(data: BookingData): Promise<BookingResult> {
     }
 
     // Update client appointment count
-    await supabase.rpc('increment_client_appointments' as never, { client_id: clientId } as never)
+    await supabaseAdmin.rpc('increment_client_appointments' as never, { client_id: clientId } as never)
 
     revalidatePath('/admin/reservas')
 
