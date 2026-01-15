@@ -1,7 +1,7 @@
 import { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/layout/Footer'
 import { WhatsAppButton } from '@/components/ui/WhatsAppButton'
@@ -39,7 +39,7 @@ interface SiteSettings {
 }
 
 async function getAppointmentData(appointmentId: string) {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
 
   const { data: appointment, error } = await supabase
     .from('appointments')
