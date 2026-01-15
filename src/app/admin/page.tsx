@@ -1,7 +1,7 @@
 import { Metadata } from 'next'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/server'
-import { format, startOfToday, endOfToday, startOfWeek, endOfWeek, startOfMonth, endOfMonth, subDays, subMonths } from 'date-fns'
+import { createAdminClient } from '@/lib/supabase/admin'
+import { format, startOfToday, startOfWeek, endOfWeek, startOfMonth, endOfMonth, subMonths } from 'date-fns'
 import { es } from 'date-fns/locale'
 import {
   Calendar,
@@ -54,7 +54,7 @@ export const metadata: Metadata = {
 }
 
 async function getDashboardData() {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
   const today = startOfToday()
   const weekStart = startOfWeek(today, { weekStartsOn: 1 })
   const weekEnd = endOfWeek(today, { weekStartsOn: 1 })
