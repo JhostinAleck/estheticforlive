@@ -1,5 +1,5 @@
 import { Metadata } from 'next'
-import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { NuevaReservaClient } from './NuevaReservaClient'
 
 export const metadata: Metadata = {
@@ -30,7 +30,7 @@ interface Client {
 }
 
 async function getData() {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
 
   const [servicesRes, staffRes, clientsRes] = await Promise.all([
     supabase

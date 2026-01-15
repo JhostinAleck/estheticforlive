@@ -1,6 +1,6 @@
 import { Metadata } from 'next'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { format, parseISO } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { Calendar, Filter, Eye, Phone, Plus, User } from 'lucide-react'
@@ -36,7 +36,7 @@ interface Staff {
 }
 
 async function getAppointments(searchParams: SearchParams) {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
   const page = parseInt(searchParams.page || '1')
   const pageSize = 20
   const offset = (page - 1) * pageSize
@@ -72,7 +72,7 @@ async function getAppointments(searchParams: SearchParams) {
 }
 
 async function getStaffList() {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
   const { data } = await supabase
     .from('staff')
     .select('id, name, color')

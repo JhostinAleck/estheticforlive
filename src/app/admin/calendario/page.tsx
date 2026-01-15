@@ -37,8 +37,8 @@ import {
 } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { Button } from '@/components/ui/Button'
-import { createClient } from '@/lib/supabase/client'
 import { APPOINTMENT_STATUS } from '@/lib/constants'
+import { getCalendarAppointments, getCalendarStaff } from '@/lib/actions/calendar'
 import {
   getBusinessHours,
   updateBusinessHours,
@@ -142,32 +142,14 @@ export default function CalendarioPage() {
   })
 
   const loadStaffList = useCallback(async () => {
-    const supabase = createClient()
-    const { data } = await supabase
-      .from('staff')
-      .select('id, name, color')
-      .eq('is_active', true)
-      .order('name')
-
-    setStaffList((data || []) as Staff[])
+    const data = await getCalendarStaff()
+    setStaffList(data)
   }, [])
 
   const loadAppointments = useCallback(async () => {
     setIsLoading(true)
-    const supabase = createClient()
-
-    const monthStart = startOfMonth(currentDate)
-    const monthEnd = endOfMonth(currentDate)
-
-    const { data } = await supabase
-      .from('appointments')
-      .select('*, services(name, fa_icon), clients(full_name, phone), staff(id, name, color)')
-      .gte('appointment_date', format(monthStart, 'yyyy-MM-dd'))
-      .lte('appointment_date', format(monthEnd, 'yyyy-MM-dd'))
-      .order('appointment_date')
-      .order('start_time')
-
-    setAppointments((data || []) as Appointment[])
+    const data = await getCalendarAppointments(currentDate)
+    setAppointments(data)
     setIsLoading(false)
   }, [currentDate])
 
