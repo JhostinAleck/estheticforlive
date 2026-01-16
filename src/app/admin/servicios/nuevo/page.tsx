@@ -4,8 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, Save, Loader2 } from 'lucide-react'
-import { createService } from '@/lib/actions/services'
-import { createClient } from '@/lib/supabase/client'
+import { createService, getCategories } from '@/lib/actions/services'
 import { ImageUpload } from '@/components/admin/ImageUpload'
 
 interface Category {
@@ -35,13 +34,8 @@ export default function NuevoServicioPage() {
 
   useEffect(() => {
     async function loadCategories() {
-      const supabase = createClient()
-      const { data } = await supabase
-        .from('categories')
-        .select('id, name')
-        .eq('is_active', true)
-        .order('display_order')
-      setCategories(data || [])
+      const data = await getCategories()
+      setCategories(data as Category[])
     }
     loadCategories()
   }, [])

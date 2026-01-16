@@ -1,6 +1,6 @@
 import { Metadata } from 'next'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { Plus, Edit, Trash2, Eye, EyeOff } from 'lucide-react'
 import { formatPrice } from '@/lib/utils'
 
@@ -29,7 +29,7 @@ interface Service {
 }
 
 async function getServices() {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
 
   const { data: categories } = await supabase
     .from('categories')

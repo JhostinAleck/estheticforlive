@@ -21,8 +21,7 @@ import {
   XCircle,
   AlertCircle,
 } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
-import { updateAppointmentStatus, updateAppointmentNotes, deleteAppointment, getAppointmentHistory } from '@/lib/actions/appointments'
+import { updateAppointmentStatus, updateAppointmentNotes, deleteAppointment, getAppointmentHistory, getAppointmentById } from '@/lib/actions/appointments'
 import { APPOINTMENT_STATUS } from '@/lib/constants'
 import { formatPrice } from '@/lib/utils'
 
@@ -87,19 +86,9 @@ export default function ReservaDetallePage({ params }: { params: { id: string } 
 
   useEffect(() => {
     async function loadData() {
-      const supabase = createClient()
+      const data = await getAppointmentById(id)
 
-      const { data, error } = await supabase
-        .from('appointments')
-        .select(`
-          *,
-          services (name, fa_icon, duration_minutes),
-          clients (id, full_name, phone, email)
-        `)
-        .eq('id', id)
-        .single()
-
-      if (error || !data) {
+      if (!data) {
         setLoading(false)
         return
       }

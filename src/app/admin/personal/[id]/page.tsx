@@ -7,8 +7,7 @@ import { ArrowLeft, Save, User, Trash2, Info, Clock, CalendarOff, Shield, Calend
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
-import { getStaffById, updateStaff, deleteStaff } from '@/lib/actions/staff'
-import { createClient } from '@/lib/supabase/client'
+import { getStaffById, updateStaff, deleteStaff, getAllServices } from '@/lib/actions/staff'
 import { StaffPortalAccess } from '@/components/admin/staff/StaffPortalAccess'
 import { StaffPermissionsForm } from '@/components/admin/staff/StaffPermissionsForm'
 import { StaffWeeklySchedule } from '@/components/admin/staff/StaffWeeklySchedule'
@@ -65,13 +64,8 @@ export default function EditarPersonalPage() {
 
   async function loadData() {
     // Load services
-    const supabase = createClient()
-    const { data: servicesData } = await supabase
-      .from('services')
-      .select('*')
-      .eq('is_active', true)
-      .order('name')
-    setServices(servicesData || [])
+    const servicesData = await getAllServices()
+    setServices(servicesData as Service[])
 
     // Load staff
     const staff = await getStaffById(id)

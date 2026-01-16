@@ -13,6 +13,73 @@ function generateSlug(name: string): string {
     .replace(/(^-|-$)/g, '')
 }
 
+// ==================== GET FUNCTIONS ====================
+
+export async function getCategories() {
+  const supabase = createAdminClient()
+
+  const { data, error } = await supabase
+    .from('categories')
+    .select('*')
+    .order('display_order')
+
+  if (error) {
+    console.error('Error fetching categories:', error)
+    return []
+  }
+
+  return data || []
+}
+
+export async function getServiceById(serviceId: string) {
+  const supabase = createAdminClient()
+
+  const { data, error } = await supabase
+    .from('services')
+    .select('*, categories(id, name)')
+    .eq('id', serviceId)
+    .single()
+
+  if (error) {
+    console.error('Error fetching service:', error)
+    return null
+  }
+
+  return data
+}
+
+export async function getCategoryById(categoryId: string) {
+  const supabase = createAdminClient()
+
+  const { data, error } = await supabase
+    .from('categories')
+    .select('*')
+    .eq('id', categoryId)
+    .single()
+
+  if (error) {
+    console.error('Error fetching category:', error)
+    return null
+  }
+
+  return data
+}
+
+export async function getCategoryWithServiceCount(categoryId: string) {
+  const supabase = createAdminClient()
+
+  const [{ data: category }, { count }] = await Promise.all([
+    supabase.from('categories').select('*').eq('id', categoryId).single(),
+    supabase.from('services').select('*', { count: 'exact', head: true }).eq('category_id', categoryId),
+  ])
+
+  if (!category) {
+    return { category: null, serviceCount: 0 }
+  }
+
+  return { category, serviceCount: count || 0 }
+}
+
 // ==================== SERVICES ====================
 
 interface ServiceData {

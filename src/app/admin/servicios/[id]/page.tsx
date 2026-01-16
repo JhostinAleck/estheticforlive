@@ -4,8 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, Save, Loader2, Trash2 } from 'lucide-react'
-import { updateService, deleteService } from '@/lib/actions/services'
-import { createClient } from '@/lib/supabase/client'
+import { updateService, deleteService, getServiceById, getCategories } from '@/lib/actions/services'
 import { ImageUpload } from '@/components/admin/ImageUpload'
 
 interface Category {
@@ -57,11 +56,9 @@ export default function EditarServicioPage({ params }: { params: { id: string } 
 
   useEffect(() => {
     async function loadData() {
-      const supabase = createClient()
-
-      const [{ data: service }, { data: cats }] = await Promise.all([
-        supabase.from('services').select('*').eq('id', id).single(),
-        supabase.from('categories').select('id, name').order('display_order'),
+      const [service, cats] = await Promise.all([
+        getServiceById(id),
+        getCategories(),
       ])
 
       if (!service) {
@@ -84,7 +81,7 @@ export default function EditarServicioPage({ params }: { params: { id: string } 
         is_featured: boolean
       }
 
-      setCategories(cats || [])
+      setCategories(cats as Category[])
       setFormData({
         name: svc.name,
         category_id: svc.category_id || '',

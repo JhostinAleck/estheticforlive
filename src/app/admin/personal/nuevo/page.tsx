@@ -7,8 +7,7 @@ import { ArrowLeft, Save, User } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
-import { createStaff } from '@/lib/actions/staff'
-import { createClient } from '@/lib/supabase/client'
+import { createStaff, getAllServices } from '@/lib/actions/staff'
 import type { Service } from '@/types/database.types'
 
 const COLORS = [
@@ -35,13 +34,8 @@ export default function NuevoPersonalPage() {
 
   useEffect(() => {
     async function loadServices() {
-      const supabase = createClient()
-      const { data } = await supabase
-        .from('services')
-        .select('*')
-        .eq('is_active', true)
-        .order('name')
-      setServices(data || [])
+      const data = await getAllServices()
+      setServices(data as Service[])
     }
     loadServices()
   }, [])

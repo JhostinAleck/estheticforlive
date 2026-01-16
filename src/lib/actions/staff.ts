@@ -1,6 +1,6 @@
 'use server'
 
-import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { revalidatePath } from 'next/cache'
 import type { Staff } from '@/types/database.types'
 
@@ -31,7 +31,7 @@ interface StaffWithServices extends Staff {
 }
 
 export async function getStaffList(): Promise<StaffWithServices[]> {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
 
   const { data, error } = await supabase
     .from('staff')
@@ -48,7 +48,7 @@ export async function getStaffList(): Promise<StaffWithServices[]> {
 }
 
 export async function getActiveStaff(): Promise<Staff[]> {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
 
   const { data, error } = await supabase
     .from('staff')
@@ -67,7 +67,7 @@ export async function getActiveStaff(): Promise<Staff[]> {
 }
 
 export async function getStaffById(id: string): Promise<StaffWithServices | null> {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
 
   const { data, error } = await supabase
     .from('staff')
@@ -85,7 +85,7 @@ export async function getStaffById(id: string): Promise<StaffWithServices | null
 
 export async function createStaff(staffData: CreateStaffData, serviceIds?: string[]) {
   try {
-    const supabase = await createClient()
+    const supabase = createAdminClient()
 
     // Create staff member
     const { data: staff, error: staffError } = await supabase
@@ -135,7 +135,7 @@ export async function createStaff(staffData: CreateStaffData, serviceIds?: strin
 
 export async function updateStaff(id: string, staffData: UpdateStaffData, serviceIds?: string[]) {
   try {
-    const supabase = await createClient()
+    const supabase = createAdminClient()
 
     // Update staff member
     const { data: staff, error: staffError } = await supabase
@@ -181,7 +181,7 @@ export async function updateStaff(id: string, staffData: UpdateStaffData, servic
 
 export async function deleteStaff(id: string) {
   try {
-    const supabase = await createClient()
+    const supabase = createAdminClient()
 
     const { error } = await supabase
       .from('staff')
@@ -205,8 +205,25 @@ export async function toggleStaffActive(id: string, is_active: boolean) {
   return updateStaff(id, { is_active })
 }
 
+export async function getAllServices() {
+  const supabase = createAdminClient()
+
+  const { data, error } = await supabase
+    .from('services')
+    .select('id, name')
+    .eq('is_active', true)
+    .order('name')
+
+  if (error) {
+    console.error('Error fetching services:', error)
+    return []
+  }
+
+  return data || []
+}
+
 export async function getStaffForService(serviceId: string): Promise<Staff[]> {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
 
   const { data, error } = await supabase
     .from('staff_services')

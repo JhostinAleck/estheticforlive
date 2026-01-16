@@ -4,8 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, Save, Loader2, Trash2 } from 'lucide-react'
-import { updateCategory, deleteCategory } from '@/lib/actions/services'
-import { createClient } from '@/lib/supabase/client'
+import { updateCategory, deleteCategory, getCategoryWithServiceCount } from '@/lib/actions/services'
 
 export default function EditarCategoriaPage({ params }: { params: { id: string } }) {
   const { id } = params
@@ -27,12 +26,7 @@ export default function EditarCategoriaPage({ params }: { params: { id: string }
 
   useEffect(() => {
     async function loadData() {
-      const supabase = createClient()
-
-      const [{ data: category }, { count }] = await Promise.all([
-        supabase.from('categories').select('*').eq('id', id).single(),
-        supabase.from('services').select('*', { count: 'exact', head: true }).eq('category_id', id),
-      ])
+      const { category, serviceCount } = await getCategoryWithServiceCount(id)
 
       if (!category) {
         setNotFound(true)
@@ -47,7 +41,7 @@ export default function EditarCategoriaPage({ params }: { params: { id: string }
         is_active: boolean
       }
 
-      setServiceCount(count || 0)
+      setServiceCount(serviceCount)
       setFormData({
         name: cat.name,
         description: cat.description || '',

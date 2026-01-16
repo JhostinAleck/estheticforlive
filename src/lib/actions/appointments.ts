@@ -148,6 +148,28 @@ export async function getAppointmentHistory(appointmentId: string) {
   return data || []
 }
 
+// Get a single appointment by ID
+export async function getAppointmentById(appointmentId: string) {
+  const supabaseAdmin = createAdminClient()
+
+  const { data, error } = await supabaseAdmin
+    .from('appointments')
+    .select(`
+      *,
+      services (name, fa_icon, duration_minutes),
+      clients (id, full_name, phone, email)
+    `)
+    .eq('id', appointmentId)
+    .single()
+
+  if (error) {
+    console.error('Error fetching appointment:', error)
+    return null
+  }
+
+  return data
+}
+
 interface AdminBookingData {
   serviceId: string
   staffId: string
