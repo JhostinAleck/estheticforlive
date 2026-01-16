@@ -1,6 +1,5 @@
 'use server'
 
-import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { format, parse, addMinutes } from 'date-fns'
 import { revalidatePath } from 'next/cache'
@@ -89,7 +88,7 @@ interface AppointmentIdData {
 
 // Get available time slots for a specific date, service and staff member
 export async function getAvailableSlots(serviceId: string, date: string, staffId: string) {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
   const selectedDate = new Date(date)
   const dayOfWeek = format(selectedDate, 'EEEE').toLowerCase() as
     | 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday'
@@ -257,7 +256,7 @@ export async function getAvailableSlots(serviceId: string, date: string, staffId
 
 // Get staff members who can perform a specific service
 export async function getStaffForServiceBooking(serviceId: string) {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
 
   const { data, error } = await supabase
     .from('staff_services')
@@ -288,7 +287,7 @@ export async function getStaffForServiceBooking(serviceId: string) {
 
 // Get closed days for a specific staff member
 export async function getStaffClosedDays(staffId: string) {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
 
   const { data: staffSchedulesData } = await supabase
     .from('staff_schedules')
@@ -313,7 +312,7 @@ export async function getStaffClosedDays(staffId: string) {
 
 // Get staff special closed dates
 export async function getStaffSpecialDates(staffId: string) {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
 
   const today = format(new Date(), 'yyyy-MM-dd')
 
@@ -478,7 +477,7 @@ interface SpecialDateClosedData {
 
 // Get closed days of week (for calendar)
 export async function getClosedDays() {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
 
   const { data: businessHoursData } = await supabase
     .from('business_hours')
@@ -502,7 +501,7 @@ export async function getClosedDays() {
 
 // Get special closed dates (for calendar)
 export async function getSpecialDates() {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
 
   const today = format(new Date(), 'yyyy-MM-dd')
 
